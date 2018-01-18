@@ -285,5 +285,16 @@ namespace k8s.Tests
                 File.Delete(tempFileInfo.FullName);
             }
         }
+
+        /// <summary>
+        ///     Checks Host is loaded from the default configuration file as a string
+        /// </summary>
+        [Fact]
+        public void DefaultConfigurationAsStringLoaded()
+        {
+            var txt = File.ReadAllText("assets/kubeconfig.yml");
+            var cfg = KubernetesClientConfiguration.BuildConfigFromConfigFileString(txt);
+            Assert.NotNull(cfg.Host);
+        }
     }
 }

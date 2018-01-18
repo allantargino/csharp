@@ -72,6 +72,41 @@ namespace k8s
         }
 
         /// <summary>
+        /// </summary>
+        /// <param name="kubeconfig">Fileinfo of the kubeconfig, cannot be null, whitespaced or empty</param>
+        /// <param name="currentContext">override the context in config file, set null if do not want to override</param>
+        /// <param name="masterUrl">overrider kube api server endpoint, set null if do not want to override</param>
+        public static KubernetesClientConfiguration BuildConfigFromConfigFileString(string kubeconfig,
+            string currentContext = null, string masterUrl = null)
+        {
+            if (string.IsNullOrWhiteSpace(kubeconfig))
+            {
+                throw new NullReferenceException(nameof(kubeconfig));
+            }
+
+            var k8SConfig = LoadKubeConfig(kubeconfig);
+            var k8SConfiguration = new KubernetesClientConfiguration();
+
+            currentContext = currentContext ?? k8SConfig.CurrentContext;
+            // only init context if context if set
+            if (currentContext != null)
+            {
+                k8SConfiguration.InitializeContext(k8SConfig, currentContext);
+            }
+            if (!string.IsNullOrWhiteSpace(masterUrl))
+            {
+                k8SConfiguration.Host = masterUrl;
+            }
+
+            if (string.IsNullOrWhiteSpace(k8SConfiguration.Host))
+            {
+                throw new KubeConfigException("Cannot infer server host url either from context or masterUrl");
+            }
+
+            return k8SConfiguration;
+        }
+
+        /// <summary>
         ///     Validates and Intializes Client Configuration
         /// </summary>
         /// <param name="k8SConfig">Kubernetes Configuration</param>
@@ -227,6 +262,19 @@ namespace k8s
             {
                 return deserializer.Deserialize<K8SConfiguration>(kubeConfigTextStream);
             }
+        }
+
+        /// <summary>
+        ///     Loads Kube Config from string
+        /// </summary>
+        /// <param name="kubeconfig">Kube config file contents</param>
+        /// <returns>Instance of the <see cref="K8SConfiguration"/> class</returns>
+        private static K8SConfiguration LoadKubeConfig(string kubeconfig)
+        {
+
+            var deserializeBuilder = new DeserializerBuilder();
+            var deserializer = deserializeBuilder.Build();
+            return deserializer.Deserialize<K8SConfiguration>(kubeconfig);
         }
     }
 }
