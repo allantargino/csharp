@@ -50,23 +50,7 @@ namespace k8s
             }
 
             var k8SConfig = LoadKubeConfig(kubeconfig);
-            var k8SConfiguration = new KubernetesClientConfiguration();
-
-            currentContext = currentContext ?? k8SConfig.CurrentContext;
-            // only init context if context if set
-            if (currentContext != null)
-            {
-                k8SConfiguration.InitializeContext(k8SConfig, currentContext);
-            }
-            if (!string.IsNullOrWhiteSpace(masterUrl))
-            {
-                k8SConfiguration.Host = masterUrl;
-            }
-
-            if (string.IsNullOrWhiteSpace(k8SConfiguration.Host))
-            {
-                throw new KubeConfigException("Cannot infer server host url either from context or masterUrl");
-            }
+            var k8SConfiguration = GetKubernetesClientConfiguration(ref currentContext, masterUrl, k8SConfig);
 
             return k8SConfiguration;
         }
@@ -76,7 +60,7 @@ namespace k8s
         /// <param name="kubeconfig">Fileinfo of the kubeconfig, cannot be null, whitespaced or empty</param>
         /// <param name="currentContext">override the context in config file, set null if do not want to override</param>
         /// <param name="masterUrl">overrider kube api server endpoint, set null if do not want to override</param>
-        public static KubernetesClientConfiguration BuildConfigFromConfigFileString(string kubeconfig,
+        public static KubernetesClientConfiguration BuildConfigFromConfigFile(string kubeconfig,
             string currentContext = null, string masterUrl = null)
         {
             if (string.IsNullOrWhiteSpace(kubeconfig))
@@ -85,6 +69,32 @@ namespace k8s
             }
 
             var k8SConfig = LoadKubeConfig(kubeconfig);
+            var k8SConfiguration = GetKubernetesClientConfiguration(ref currentContext, masterUrl, k8SConfig);
+
+            return k8SConfiguration;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="kubeconfig">Fileinfo of the kubeconfig, cannot be null, whitespaced or empty</param>
+        /// <param name="currentContext">override the context in config file, set null if do not want to override</param>
+        /// <param name="masterUrl">overrider kube api server endpoint, set null if do not want to override</param>
+        public static KubernetesClientConfiguration BuildConfigFromConfigFile(Stream kubeconfig,
+            string currentContext = null, string masterUrl = null)
+        {
+            if (kubeconfig == null && kubeconfig.Length == 0)
+            {
+                throw new NullReferenceException(nameof(kubeconfig));
+            }
+
+            var k8SConfig = LoadKubeConfig(kubeconfig);
+            var k8SConfiguration = GetKubernetesClientConfiguration(ref currentContext, masterUrl, k8SConfig);
+
+            return k8SConfiguration;
+        }
+
+        private static KubernetesClientConfiguration GetKubernetesClientConfiguration(ref string currentContext, string masterUrl, K8SConfiguration k8SConfig)
+        {
             var k8SConfiguration = new KubernetesClientConfiguration();
 
             currentContext = currentContext ?? k8SConfig.CurrentContext;
@@ -275,6 +285,18 @@ namespace k8s
             var deserializeBuilder = new DeserializerBuilder();
             var deserializer = deserializeBuilder.Build();
             return deserializer.Deserialize<K8SConfiguration>(kubeconfig);
+        }
+
+        /// <summary>
+        ///     Loads Kube Config from stream.
+        /// </summary>
+        /// <param name="kubeconfig">Kube config file contents</param>
+        /// <returns>Instance of the <see cref="K8SConfiguration"/> class</returns>
+        private static K8SConfiguration LoadKubeConfig(Stream kubeconfig)
+        {
+            StreamReader sr = new StreamReader(kubeconfig);
+            string strKubeConfig = sr.ReadToEnd();
+            return LoadKubeConfig(strKubeConfig);
         }
     }
 }
