@@ -293,8 +293,23 @@ namespace k8s.Tests
         public void DefaultConfigurationAsStringLoaded()
         {
             var txt = File.ReadAllText("assets/kubeconfig.yml");
-            var cfg = KubernetesClientConfiguration.BuildConfigFromConfigFileString(txt);
+
+            var cfg = KubernetesClientConfiguration.BuildConfigFromConfigFile(txt, null, null);
             Assert.NotNull(cfg.Host);
+        }
+
+
+        /// <summary>
+        ///     Checks Host is loaded from the default configuration file as a stream
+        /// </summary>
+        [Fact]
+        public void DefaultConfigurationAsStreamLoaded()
+        {
+            using (var stream = File.OpenRead("assets/kubeconfig.yml"))
+            {
+                var cfg = KubernetesClientConfiguration.BuildConfigFromConfigFile(stream);
+                Assert.NotNull(cfg.Host);
+            }
         }
     }
 }
