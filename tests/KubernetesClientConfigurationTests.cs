@@ -287,7 +287,7 @@ namespace k8s.Tests
         }
 
         /// <summary>
-        ///     Checks Host is loaded from the default configuration file as a string
+        ///     Checks Host is loaded from the default configuration file as string
         /// </summary>
         [Fact]
         public void DefaultConfigurationAsStringLoaded()
@@ -300,7 +300,7 @@ namespace k8s.Tests
 
 
         /// <summary>
-        ///     Checks Host is loaded from the default configuration file as a stream
+        ///     Checks Host is loaded from the default configuration file as stream
         /// </summary>
         [Fact]
         public void DefaultConfigurationAsStreamLoaded()
