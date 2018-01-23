@@ -82,10 +82,17 @@ namespace k8s
         public static KubernetesClientConfiguration BuildConfigFromConfigFile(Stream kubeconfig,
             string currentContext = null, string masterUrl = null)
         {
-            if (kubeconfig == null && kubeconfig.Length == 0)
+            if (kubeconfig == null)
             {
                 throw new NullReferenceException(nameof(kubeconfig));
             }
+
+            if (!kubeconfig.CanSeek)
+            {
+                throw new Exception("Stream don't support seeking!");
+            }
+
+            kubeconfig.Position = 0;
 
             var k8SConfig = LoadKubeConfig(kubeconfig);
             var k8SConfiguration = GetKubernetesClientConfiguration(ref currentContext, masterUrl, k8SConfig);
