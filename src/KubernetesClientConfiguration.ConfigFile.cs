@@ -303,7 +303,7 @@ namespace k8s
         {
             using (var sr = new StreamReader(kubeconfig))
             {               
-                string strKubeConfig = sr.ReadToEnd();
+                var strKubeConfig = sr.ReadToEnd();
                 return LoadKubeConfig(strKubeConfig);
             }
         }
