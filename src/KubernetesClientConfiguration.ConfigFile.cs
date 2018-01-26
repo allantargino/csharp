@@ -50,7 +50,7 @@ namespace k8s
             }
 
             var k8SConfig = LoadKubeConfig(kubeconfig);
-            var k8SConfiguration = GetKubernetesClientConfiguration(ref currentContext, masterUrl, k8SConfig);
+            var k8SConfiguration = GetKubernetesClientConfiguration(currentContext, masterUrl, k8SConfig);
 
             return k8SConfiguration;
         }
@@ -69,7 +69,7 @@ namespace k8s
             }
 
             var k8SConfig = LoadKubeConfig(kubeconfig);
-            var k8SConfiguration = GetKubernetesClientConfiguration(ref currentContext, masterUrl, k8SConfig);
+            var k8SConfiguration = GetKubernetesClientConfiguration(currentContext, masterUrl, k8SConfig);
 
             return k8SConfiguration;
         }
@@ -82,18 +82,25 @@ namespace k8s
         public static KubernetesClientConfiguration BuildConfigFromConfigFile(Stream kubeconfig,
             string currentContext = null, string masterUrl = null)
         {
-            if (kubeconfig == null && kubeconfig.Length == 0)
+            if (kubeconfig == null)
             {
                 throw new NullReferenceException(nameof(kubeconfig));
             }
 
+            if (!kubeconfig.CanSeek)
+            {
+                throw new Exception("Stream don't support seeking!");
+            }
+
+            kubeconfig.Position = 0;
+
             var k8SConfig = LoadKubeConfig(kubeconfig);
-            var k8SConfiguration = GetKubernetesClientConfiguration(ref currentContext, masterUrl, k8SConfig);
+            var k8SConfiguration = GetKubernetesClientConfiguration(currentContext, masterUrl, k8SConfig);
 
             return k8SConfiguration;
         }
 
-        private static KubernetesClientConfiguration GetKubernetesClientConfiguration(ref string currentContext, string masterUrl, K8SConfiguration k8SConfig)
+        private static KubernetesClientConfiguration GetKubernetesClientConfiguration(string currentContext, string masterUrl, K8SConfiguration k8SConfig)
         {
             var k8SConfiguration = new KubernetesClientConfiguration();
 
@@ -294,9 +301,11 @@ namespace k8s
         /// <returns>Instance of the <see cref="K8SConfiguration"/> class</returns>
         private static K8SConfiguration LoadKubeConfig(Stream kubeconfig)
         {
-            StreamReader sr = new StreamReader(kubeconfig);
-            string strKubeConfig = sr.ReadToEnd();
-            return LoadKubeConfig(strKubeConfig);
+            using (var sr = new StreamReader(kubeconfig))
+            {               
+                var strKubeConfig = sr.ReadToEnd();
+                return LoadKubeConfig(strKubeConfig);
+            }
         }
     }
 }
